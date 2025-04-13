@@ -21,6 +21,7 @@ closeModalButton.addEventListener('click', () => {
 
 closeboardModal.addEventListener('click', () => {
     boardModal.style.display = 'none'
+    warning.style.display = 'hidden'
 })
 
 window.addEventListener('click', (event) => {
@@ -44,16 +45,18 @@ function saveToLocalStorage(){
             name:board.id,
             tasks: []
         }
-        const taskContent = {
-            taskName:null,
-            description:null,
-            date:null
-        }
+        // const taskContent = {
+        //     taskName:null,
+        //     description:null,
+        //     date:null
+        // }
         const tasks = board.querySelectorAll('.item')
         tasks.forEach((task) => {
-            taskContent.taskName = task.querySelector('.task-name').textContent
-            taskContent.description = task.querySelector('.description').textContent
-            taskContent.date = task.querySelector('.date').textContent
+            const taskContent = {
+            taskName : task.querySelector('.task-name').textContent,
+            description : task.querySelector('.description').textContent,
+            date : task.querySelector('.date').textContent,
+            }
             boardData.tasks.push(taskContent)
         })
         boards.push(boardData)
@@ -63,13 +66,13 @@ function saveToLocalStorage(){
 
 function loadFromLocalStorage(){
     const savedBoards = JSON.parse(localStorage.getItem("boards"))
+    if(!savedBoards) return
     savedBoards.forEach((boards) => {
         createBoard(boards.name)
         const currentBoard = document.getElementById(boards.name)
         const itemBox = currentBoard.querySelector('.item-box')
         
         boards.tasks.forEach((task) => {
-            console.log(task)
             addTask(itemBox, task.taskName, task.description, task.date)
         })
     })
@@ -174,16 +177,16 @@ function editTask(button, item){
                 warning.style.visibility = 'visible'
                 return
             }
-
-            item.children[0].children[0].textContent = input.value
-            item.children[0].children[1].textContent = description.value
-            
-            modal.style.display ='none'
-            input.value = '';
-            description.value = '';
-            warning.style.visibility = 'hidden'
-
-            submitButton.addEventListener('click', submitHandler)
+            else{
+                item.children[0].children[0].textContent = input.value
+                item.children[0].children[1].textContent = description.value
+                
+                modal.style.display ='none'
+                input.value = '';
+                description.value = '';
+                warning.style.visibility = 'hidden'
+                saveToLocalStorage()
+            }
         }
         submitButton.addEventListener('click', submitHandler)
     })
@@ -208,7 +211,7 @@ function returnDate() {
     return finalDate;
 }
 
-function addTask(parentBoard, taskText, descriptionText) {
+function addTask(parentBoard, taskText, descriptionText, dateText) {
     const itemCard = document.createElement('div');
     const taskContent = document.createElement('div');
     const taskName = document.createElement('h3');
@@ -226,7 +229,7 @@ function addTask(parentBoard, taskText, descriptionText) {
     description.innerText = descriptionText;
 
     date.classList.add('date');
-    date.innerText = returnDate();
+    date.innerText = dateText;
 
     // Set up buttons
     editButton.innerText = 'Edit';
@@ -270,20 +273,25 @@ function addTaskToBoard(button){
         const description = document.getElementById('description-input')
         const parentBoard = button.parentElement
         const itemB = parentBoard.children[1]
+        const date = returnDate()
+
+        input.addEventListener('input', () => {
+            warning.style.visibility = 'hidden'
+        })
 
         const submitHandler = () => {
             if(!input.value.trim().length){
                 warning.style.visibility = 'visible'
                 return
             }
-
-            addTask(itemB, input.value, description.value)
+            console.log(date)
+            addTask(itemB, input.value, description.value, date)
             modal.style.display ='none'
             input.value = '';
             description.value = '';
             warning.style.visibility = 'hidden'
 
-            submitButton.addEventListener('click', submitHandler)
+            submitButton.removeEventListener('click', submitHandler)
         }
         submitButton.addEventListener('click', submitHandler)
     })
@@ -354,6 +362,7 @@ function defaultLayout(){
         createBoard("In Progress")
         createBoard("Done")
         attachItems()
+        saveToLocalStorage()
     }
     
 }
